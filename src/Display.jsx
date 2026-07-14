@@ -6,15 +6,24 @@ import {
   House,
   Monitor,
   MonitorCheck,
-  Check,
   Clock3,
   ClipboardList,
+  ShieldCheck,
+  PackageCheck,
+  CircleCheckBig,
 } from "lucide-react";
 
 import rsuratih from "./assets/RSURATIH.png";
 import smkti from "./assets/SMKTI.jpg";
 
 const steps = ["resep_masuk", "validasi_farmasi", "proses", "penyerahan"];
+
+const stepIcons = {
+  resep_masuk: ClipboardList,
+  validasi_farmasi: ShieldCheck,
+  proses: PackageCheck,
+  penyerahan: CircleCheckBig,
+};
 
 const stepLabel = {
   resep_masuk: "Resep Masuk",
@@ -149,12 +158,11 @@ export default function Display() {
           </div>
         </div>
 
-        <div className="clock-box">
-          <Clock3 size={18} />
-          <span>{clock}</span>
-        </div>
-
         <div className="patient-card">
+          <div className="clock-box">
+            <Clock3 size={18} />
+            <span>{clock}</span>
+          </div>
           <div className="patient-header">
             <div className="recipe-box">
               <span>No. Resep</span>
@@ -166,63 +174,38 @@ export default function Display() {
               <h1>{patient.nama_pasien}</h1>
             </div>
           </div>
-
           <div className="display-stepper">
-            {steps.map((step, idx) => (
-              <div
-                key={step}
-                className={`display-step ${currentStep >= idx ? "active" : ""}`}
-              >
+            {steps.map((step, idx) => {
+              const Icon = stepIcons[step];
+
+              return (
                 <div
-                  className={`display-icon ${step} ${
-                    currentStep >= idx ? "done" : ""
-                  }`}
+                  key={step}
+                  className={`display-step ${currentStep >= idx ? "active" : ""}`}
                 >
-                  {currentStep >= idx ? (
-                    <Check size={28} strokeWidth={3} />
-                  ) : (
-                    idx + 1
-                  )}
+                  <div
+                    className={`display-icon ${step} ${
+                      currentStep >= idx ? "done" : ""
+                    }`}
+                  >
+                    <Icon
+                      size={70}
+                      strokeWidth={2.5}
+                      className={currentStep === idx ? "active-icon" : ""}
+                    />
+                  </div>
+
+                  <h4>{stepLabel[step]}</h4>
+
+                  <p>
+                    {step === "resep_masuk" && "Resep telah diterima"}
+                    {step === "validasi_farmasi" && "Sedang divalidasi"}
+                    {step === "proses" && "Obat sedang disiapkan"}
+                    {step === "penyerahan" && "Obat siap diambil"}
+                  </p>
                 </div>
-
-                <h3>{stepLabel[step]}</h3>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="tracker-card">
-          <div className="display-stepper">
-            {steps.map((step, idx) => (
-              <div
-                key={step}
-                className={`display-step ${currentStep >= idx ? "active" : ""}`}
-              >
-                <div
-                  className={`display-icon ${step} ${
-                    currentStep >= idx ? "done" : ""
-                  }`}
-                >
-                  {currentStep >= idx ? (
-                    <Check size={28} strokeWidth={3} />
-                  ) : (
-                    idx + 1
-                  )}
-                </div>
-
-                <h4>{stepLabel[step]}</h4>
-
-                <p>
-                  {step === "resep_masuk" && "Resep telah diterima"}
-
-                  {step === "validasi_farmasi" && "Sedang divalidasi"}
-
-                  {step === "proses" && "Obat sedang disiapkan"}
-
-                  {step === "penyerahan" && "Obat siap diambil"}
-                </p>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>
