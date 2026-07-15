@@ -63,29 +63,67 @@ export default function Display() {
     return () => clearInterval(timer);
   }, []);
 
+  const priority = {
+    resep_masuk: 1,
+    validasi_farmasi: 2,
+    proses: 3,
+    penyerahan: 4,
+  };
+
+  const getLastActivityTime = (item) => {
+    switch (item.status_akhir) {
+      case "penyerahan":
+        return item.waktu.penyerahan;
+
+      case "proses":
+        return item.waktu.proses;
+
+      case "validasi_farmasi":
+        return item.waktu.validasi_farmasi;
+
+      default:
+        return item.waktu.resep_masuk;
+    }
+  };
+
   const fetchData = async () => {
     try {
-      const res = await fetch(`${API_URL}/reseptracker/?action=list`, {
-        headers: {
-          Authorization: `Bearer ${TOKEN}`,
-          Accept: "application/json",
+      const res = await fetch(
+        `${API_URL}/reseptracker/?action=list&jenis=rajal`,
+        {
+          headers: {
+            Authorization: `Bearer ${TOKEN}`,
+            Accept: "application/json",
+          },
         },
-      });
+      );
 
       const json = await res.json();
 
       const result = Array.isArray(json) ? json : json.data || [];
 
+      const sortedPatients = [...result].sort((a, b) => {
+        const timeA = new Date(getLastActivityTime(a)).getTime();
+        const timeB = new Date(getLastActivityTime(b)).getTime();
+
+        if (timeA !== timeB) {
+          return timeB - timeA;
+        }
+
+        return priority[b.status_akhir] - priority[a.status_akhir];
+      });
+
       setPatients((old) => {
-        if (JSON.stringify(old) === JSON.stringify(result)) {
+        if (JSON.stringify(old) === JSON.stringify(sortedPatients)) {
           return old;
         }
-        return result;
+
+        return sortedPatients;
       });
 
       setLoading(false);
     } catch (err) {
-      console.log(err);
+      console.error(err);
       setLoading(false);
     }
   };
@@ -99,26 +137,24 @@ export default function Display() {
   }, []);
 
   useEffect(() => {
-    if (patients.length && current >= patients.length) {
+    if (!patients.length) return;
+
+    const slide = setInterval(() => {
+      setCurrent((prev) => (prev + 1) % patients.length);
+    }, 5000);
+
+    return () => clearInterval(slide);
+  }, [patients]);
+
+  useEffect(() => {
+    if (current >= patients.length && patients.length > 0) {
       setCurrent(0);
     }
-  }, [patients]);
+  }, [patients, current]);
 
   const patient = useMemo(() => {
     return patients[current] || null;
   }, [patients, current]);
-
-  useEffect(() => {
-    if (!patient) return;
-
-    if (patient.status_akhir === "penyerahan") {
-      const timeout = setTimeout(() => {
-        setCurrent((prev) => (prev >= patients.length - 1 ? 0 : prev + 1));
-      }, 3000);
-
-      return () => clearTimeout(timeout);
-    }
-  }, [patient, patients]);
 
   if (loading) {
     return <div className="loading">Memuat data...</div>;
@@ -189,7 +225,7 @@ export default function Display() {
                     }`}
                   >
                     <Icon
-                      size={70}
+                      size={62}
                       strokeWidth={2.5}
                       className={currentStep === idx ? "active-icon" : ""}
                     />

@@ -9,12 +9,12 @@ import Dashboard from "./Dashboard.jsx";
 import App from "./App.jsx";
 import Display from "./Display.jsx";
 
-createRoot(document.getElementById('root')).render(
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/tracker" element={<App />} />
-        <Route path="/display" element={<Display />} />
-      </Routes>
-    </BrowserRouter>
-)
+createRoot(document.getElementById("root")).render(
+  <BrowserRouter>
+    <Routes>
+      <Route path="/" element={<Dashboard />} />
+      <Route path="/tracker" element={<App />} />
+      <Route path="/display" element={<Display />} />
+    </Routes>
+  </BrowserRouter>,
+);
