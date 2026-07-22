@@ -37,7 +37,7 @@ export default function Display() {
   const TOKEN = import.meta.env.VITE_API_TOKEN;
 
   const [patients, setPatients] = useState([]);
-  const [current, setCurrent] = useState(0);
+  const [currentPatient, setCurrentPatient] = useState(null);
   const [loading, setLoading] = useState(true);
   const [clock, setClock] = useState("");
 
@@ -63,33 +63,10 @@ export default function Display() {
     return () => clearInterval(timer);
   }, []);
 
-  const priority = {
-    resep_masuk: 1,
-    validasi_farmasi: 2,
-    proses: 3,
-    penyerahan: 4,
-  };
-
-  const getLastActivityTime = (item) => {
-    switch (item.status_akhir) {
-      case "penyerahan":
-        return item.waktu.penyerahan;
-
-      case "proses":
-        return item.waktu.proses;
-
-      case "validasi_farmasi":
-        return item.waktu.validasi_farmasi;
-
-      default:
-        return item.waktu.resep_masuk;
-    }
-  };
-
   const fetchData = async () => {
     try {
       const res = await fetch(
-        `${API_URL}/reseptracker/?action=list&jenis=rajal`,
+        `${API_URL}/reseptracker/?action=list&jenis=rajal&only_active=1`,
         {
           headers: {
             Authorization: `Bearer ${TOKEN}`,
@@ -103,22 +80,74 @@ export default function Display() {
       const result = Array.isArray(json) ? json : json.data || [];
 
       const sortedPatients = [...result].sort((a, b) => {
-        const timeA = new Date(getLastActivityTime(a)).getTime();
-        const timeB = new Date(getLastActivityTime(b)).getTime();
-
-        if (timeA !== timeB) {
-          return timeB - timeA;
-        }
-
-        return priority[b.status_akhir] - priority[a.status_akhir];
+        return (
+          new Date(a.waktu.resep_masuk).getTime() -
+          new Date(b.waktu.resep_masuk).getTime()
+        );
       });
 
-      setPatients((old) => {
-        if (JSON.stringify(old) === JSON.stringify(sortedPatients)) {
-          return old;
+      setPatients(sortedPatients);
+
+      setCurrentPatient((old) => {
+        if (!sortedPatients.length) return null;
+
+        if (!old) {
+          return sortedPatients[0];
         }
 
-        return sortedPatients;
+        const current = sortedPatients.find((p) => p.no_resep === old.no_resep);
+
+        if (!current) {
+          return sortedPatients[0];
+        }
+
+        if (
+          current.status_akhir === "validasi_farmasi" ||
+          current.status_akhir === "proses"
+        ) {
+          return current;
+        }
+
+        if (current.status_akhir === "resep_masuk") {
+          const priority = sortedPatients.find(
+            (p) =>
+              p.no_resep !== current.no_resep &&
+              (p.status_akhir === "validasi_farmasi" ||
+                p.status_akhir === "proses"),
+          );
+
+          if (priority) {
+            return priority;
+          }
+
+          return current;
+        }
+
+        if (current.status_akhir === "penyerahan") {
+          const priority = sortedPatients.find(
+            (p) =>
+              p.status_akhir === "validasi_farmasi" ||
+              p.status_akhir === "proses",
+          );
+
+          if (priority) {
+            return priority;
+          }
+
+          const nextQueue = sortedPatients.find(
+            (p) =>
+              p.no_resep !== current.no_resep &&
+              p.status_akhir === "resep_masuk",
+          );
+
+          if (nextQueue) {
+            return nextQueue;
+          }
+
+          return current;
+        }
+
+        return current;
       });
 
       setLoading(false);
@@ -136,25 +165,7 @@ export default function Display() {
     return () => clearInterval(interval);
   }, []);
 
-  useEffect(() => {
-    if (!patients.length) return;
-
-    const slide = setInterval(() => {
-      setCurrent((prev) => (prev + 1) % patients.length);
-    }, 5000);
-
-    return () => clearInterval(slide);
-  }, [patients]);
-
-  useEffect(() => {
-    if (current >= patients.length && patients.length > 0) {
-      setCurrent(0);
-    }
-  }, [patients, current]);
-
-  const patient = useMemo(() => {
-    return patients[current] || null;
-  }, [patients, current]);
+  const patient = currentPatient;
 
   if (loading) {
     return <div className="loading">Memuat data...</div>;
