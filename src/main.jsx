@@ -1,5 +1,7 @@
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import "./index.css";
+import "./App.css";
 import "@fontsource/poppins";
 import "@fontsource/poppins/400.css";
 import "@fontsource/poppins/500.css";

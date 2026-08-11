@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import "./Display.css";
 
@@ -57,9 +57,7 @@ export default function Display() {
     };
 
     updateClock();
-
     const timer = setInterval(updateClock, 1000);
-
     return () => clearInterval(timer);
   }, []);
 
@@ -76,7 +74,6 @@ export default function Display() {
       );
 
       const json = await res.json();
-
       const result = Array.isArray(json) ? json : json.data || [];
 
       const sortedPatients = [...result].sort((a, b) => {
@@ -90,16 +87,10 @@ export default function Display() {
 
       setCurrentPatient((old) => {
         if (!sortedPatients.length) return null;
-
-        if (!old) {
-          return sortedPatients[0];
-        }
+        if (!old) return sortedPatients[0];
 
         const current = sortedPatients.find((p) => p.no_resep === old.no_resep);
-
-        if (!current) {
-          return sortedPatients[0];
-        }
+        if (!current) return sortedPatients[0];
 
         if (
           current.status_akhir === "validasi_farmasi" ||
@@ -115,11 +106,7 @@ export default function Display() {
               (p.status_akhir === "validasi_farmasi" ||
                 p.status_akhir === "proses"),
           );
-
-          if (priority) {
-            return priority;
-          }
-
+          if (priority) return priority;
           return current;
         }
 
@@ -129,21 +116,14 @@ export default function Display() {
               p.status_akhir === "validasi_farmasi" ||
               p.status_akhir === "proses",
           );
-
-          if (priority) {
-            return priority;
-          }
+          if (priority) return priority;
 
           const nextQueue = sortedPatients.find(
             (p) =>
               p.no_resep !== current.no_resep &&
               p.status_akhir === "resep_masuk",
           );
-
-          if (nextQueue) {
-            return nextQueue;
-          }
-
+          if (nextQueue) return nextQueue;
           return current;
         }
 
@@ -159,9 +139,7 @@ export default function Display() {
 
   useEffect(() => {
     fetchData();
-
     const interval = setInterval(fetchData, 10000);
-
     return () => clearInterval(interval);
   }, []);
 
@@ -188,7 +166,7 @@ export default function Display() {
             </div>
           </div>
 
-          <h2>Display Resep Farmasi</h2>
+          <h2>display resep farmasi</h2>
 
           <div className="actions">
             <Link to="/" className="top-icon">
@@ -205,22 +183,23 @@ export default function Display() {
           </div>
         </div>
 
-        <div className="patient-card">
-          <div className="clock-box">
-            <Clock3 size={18} />
+        <div className="patient-table-format">
+          <div className="table-clock-row">
+            <Clock3 size={24} />
             <span>{clock}</span>
           </div>
-          <div className="patient-header">
-            <div className="recipe-box">
-              <span>No. Resep</span>
-              <strong>{patient.no_resep}</strong>
-            </div>
 
-            <div className="patient-box">
-              <span>Nama Pasien</span>
-              <h1>{patient.nama_pasien}</h1>
+          <div className="table-header-row">
+            <div className="col-resep">
+              <span className="col-label">No. Resep</span>
+              <strong className="col-value">{patient.no_resep}</strong>
+            </div>
+            <div className="col-pasien">
+              <span className="col-label">Nama Pasien</span>
+              <h1 className="col-value">{patient.nama_pasien}</h1>
             </div>
           </div>
+
           <div className="display-stepper">
             {steps.map((step, idx) => {
               const Icon = stepIcons[step];
@@ -228,7 +207,9 @@ export default function Display() {
               return (
                 <div
                   key={step}
-                  className={`display-step ${currentStep >= idx ? "active" : ""}`}
+                  className={`display-step ${
+                    currentStep >= idx ? "active" : ""
+                  }`}
                 >
                   <div
                     className={`display-icon ${step} ${
@@ -236,7 +217,7 @@ export default function Display() {
                     }`}
                   >
                     <Icon
-                      size={62}
+                      size={64}
                       strokeWidth={2.5}
                       className={currentStep === idx ? "active-icon" : ""}
                     />
